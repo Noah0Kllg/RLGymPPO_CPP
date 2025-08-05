@@ -15,15 +15,15 @@ namespace RLGSC {
         Vec dist_vec = ball_pos - car_pos;
         float dist = dist_vec.Length();
         
-        // DOUBLE JUMP REWARD
-        if (prevAction.jump && is_airborne && !this->first_jump_used) {
+        // DOUBLE JUMP REWARD - using built-in RocketSim tracking
+        if (player.carState.hasDoubleJumped && !this->double_jump_rewarded) {
             reward += 0.2f; // Small reward for double jumping
-            this->first_jump_used = true;
+            this->double_jump_rewarded = true;
         }
         
-        // Reset jump tracking when on ground
+        // Reset double jump tracking when on ground
         if (player.carState.isOnGround) {
-            this->first_jump_used = false;
+            this->double_jump_rewarded = false;
         }
         
         // 1. JUMP TOUCH REWARD

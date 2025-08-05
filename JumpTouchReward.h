@@ -17,6 +17,8 @@ namespace RLGSC {
      * 
      * The air roll component uses distance-based scaling to encourage constant air rolling
      * during aerial approaches, with higher rewards the closer the agent gets to the ball.
+     * 
+     * Uses RocketSim's built-in hasDoubleJumped tracking for accurate double jump detection.
      */
     class JumpTouchReward : public RewardFunction {
     public:
@@ -40,7 +42,7 @@ namespace RLGSC {
             : minHeight(minHeight), maxHeight(maxHeight), range(maxHeight - minHeight), 
               air_roll_weight(airRollWeight), air_roll_min_height(airRollMinHeight),
               last_roll_input(0.0f), direction_changes(0), cumulative_roll_direction(0.0f),
-              first_jump_used(false) {
+              double_jump_rewarded(false) {
                 // Ensure range is positive to avoid division issues
                 if (range <= 0) {
                     this->range = 1.0f;
@@ -52,7 +54,7 @@ namespace RLGSC {
             last_roll_input = 0.0f;
             direction_changes = 0;
             cumulative_roll_direction = 0.0f;
-            first_jump_used = false;
+            double_jump_rewarded = false;
         }
 
         // Calculate reward per step
@@ -64,8 +66,8 @@ namespace RLGSC {
         int direction_changes;
         float cumulative_roll_direction;
         
-        // Jump tracking
-        bool first_jump_used;
+        // Double jump reward tracking
+        bool double_jump_rewarded;
         
         // Constants
         static constexpr int MAX_DIRECTION_CHANGES = 2;
