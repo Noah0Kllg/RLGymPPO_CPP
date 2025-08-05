@@ -15,6 +15,17 @@ namespace RLGSC {
         Vec dist_vec = ball_pos - car_pos;
         float dist = dist_vec.Length();
         
+        // DOUBLE JUMP REWARD
+        if (prevAction.jump && is_airborne && !this->first_jump_used) {
+            reward += 0.2f; // Small reward for double jumping
+            this->first_jump_used = true;
+        }
+        
+        // Reset jump tracking when on ground
+        if (player.carState.isOnGround) {
+            this->first_jump_used = false;
+        }
+        
         // 1. JUMP TOUCH REWARD
         if (player.ballTouchedStep && is_airborne && ball_pos.z >= minHeight) {
             float heightAboveMin = ball_pos.z - minHeight;
@@ -67,7 +78,7 @@ namespace RLGSC {
                     air_roll_reward *= 0.3f;
                 }
                 
-                // Boost bonus
+                // Boost bonus - helps with faster, more controlled aerials
                 if (prevAction.boost && player.boostFraction > 0.2f) air_roll_reward *= 1.4f;
                 
                 // DISTANCE-BASED BONUS: Reward air rolling when close to the ball
@@ -88,13 +99,20 @@ namespace RLGSC {
                             air_roll_reward *= 1.5f;
                         }
                         
-                        // Bonus for moving towards the ball while air rolling
+                        // ENHANCED APPROACH SPEED BONUS - the faster the better
                         float speed_towards_ball = 0.f;
                         if (dist > 1e-6f) speed_towards_ball = player.phys.vel.Dot(dist_vec / dist);
                         
-                        if (speed_towards_ball > 50.0f) {
-                            float approach_factor = std::min(1.0f, speed_towards_ball / 1000.0f);
-                            air_roll_reward *= (1.0f + approach_factor * 0.5f);
+                        if (speed_towards_ball > 100.0f) {
+                            // Scale approach bonus based on speed - faster = much better
+                            float approach_factor = std::min(2.0f, speed_towards_ball / 1000.0f); // Cap at 2.0x
+                            float approach_multiplier = 1.0f + approach_factor; // 1x to 3x multiplier
+                            air_roll_reward *= approach_multiplier;
+                            
+                            // Extra bonus for very fast approaches
+                            if (speed_towards_ball > 1500.0f) {
+                                air_roll_reward *= 1.3f;
+                            }
                         }
                     }
                 }
