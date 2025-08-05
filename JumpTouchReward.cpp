@@ -36,12 +36,9 @@ namespace RLGSC {
             touch_reward *= (1.0f + direction_factor * 0.5f);
             
             reward += touch_reward;
-            
-            // Mark that we just touched the ball to prevent air roll farming
-            this->ball_touched_recently = this->air_roll_cooldown_steps;
         }
         
-        // 2. AIR ROLL REWARD
+        // 2. AIR ROLL REWARD - Distance-based continuous reward
         if (is_airborne) {
             float current_roll_input = prevAction.roll;
             
@@ -54,16 +51,15 @@ namespace RLGSC {
             
             bool is_wiggling = this->direction_changes > MAX_DIRECTION_CHANGES;
             
-            // Prevent air roll farming after ball touches
-            bool is_farming_prevention_active = this->ball_touched_recently > 0;
-            
-            if (!is_wiggling && std::abs(current_roll_input) > 0.1f && !is_farming_prevention_active) {
+            if (!is_wiggling && std::abs(current_roll_input) > 0.1f) {
                 float current_angular_vel = player.phys.angVel.y;
                 float roll_angular_vel = std::abs(current_angular_vel);
                 float roll_intensity = std::min(1.0f, roll_angular_vel / CommonValues::CAR_MAX_ANG_VEL);
                 
+                // Base air roll reward
                 air_roll_reward = roll_intensity * this->air_roll_weight;
                 
+                // Directional preference
                 if (current_roll_input > 0.1f) {
                     air_roll_reward *= 1.5f;
                     if (this->cumulative_roll_direction > 2.0f) air_roll_reward *= 1.3f;
@@ -71,26 +67,41 @@ namespace RLGSC {
                     air_roll_reward *= 0.3f;
                 }
                 
+                // Boost bonus
                 if (prevAction.boost && player.boostFraction > 0.2f) air_roll_reward *= 1.4f;
                 
-                // Enhanced interception bonus - only when approaching ball
-                if (dist < 1000.0f && ball_pos.z > 250.0f) {
-                    float speed_towards_ball = 0.f;
-                    if (dist > 1e-6f) speed_towards_ball = player.phys.vel.Dot(dist_vec / dist);
+                // DISTANCE-BASED BONUS: Reward air rolling when close to the ball
+                if (ball_pos.z > 200.0f) { // Only when ball is in the air
+                    float max_reward_distance = 1200.0f; // Start giving rewards from this distance
                     
-                    if (speed_towards_ball > 100.0f) {
-                        // Scale bonus based on distance - closer = higher bonus
-                        float distance_factor = std::max(0.5f, (1000.0f - dist) / 1000.0f);
-                        air_roll_reward *= (1.5f + distance_factor * 1.0f); // 1.5x to 2.5x multiplier
+                    if (dist < max_reward_distance) {
+                        // Scale reward inversely with distance - closer = higher reward
+                        float distance_factor = (max_reward_distance - dist) / max_reward_distance;
+                        distance_factor = std::max(0.0f, distance_factor); // Ensure positive
                         
-                        // Bonus for roll intensity to encourage committed rolls
-                        air_roll_reward *= (1.0f + roll_intensity * 0.5f);
+                        // Apply distance bonus - scales from 0x to 2x multiplier
+                        float distance_multiplier = 1.0f + (distance_factor * 2.0f);
+                        air_roll_reward *= distance_multiplier;
                         
-                        // Extra bonus for being very close to ball while air rolling
+                        // Extra bonus for being very close
                         if (dist < 400.0f) {
-                            air_roll_reward *= 1.3f;
+                            air_roll_reward *= 1.5f;
+                        }
+                        
+                        // Bonus for moving towards the ball while air rolling
+                        float speed_towards_ball = 0.f;
+                        if (dist > 1e-6f) speed_towards_ball = player.phys.vel.Dot(dist_vec / dist);
+                        
+                        if (speed_towards_ball > 50.0f) {
+                            float approach_factor = std::min(1.0f, speed_towards_ball / 1000.0f);
+                            air_roll_reward *= (1.0f + approach_factor * 0.5f);
                         }
                     }
+                }
+                
+                // Bonus for touching ball while air rolling
+                if (player.ballTouchedStep) {
+                    air_roll_reward *= 1.5f;
                 }
             }
             
@@ -99,11 +110,6 @@ namespace RLGSC {
             this->last_roll_input = 0.0f;
             this->direction_changes = 0;
             this->cumulative_roll_direction = 0.0f;
-        }
-        
-        // Decrease the cooldown counter
-        if (this->ball_touched_recently > 0) {
-            this->ball_touched_recently--;
         }
         
         reward += air_roll_reward;

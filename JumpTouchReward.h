@@ -11,13 +11,10 @@ namespace RLGSC {
      * 
      * This reward function has two main components:
      * 1. Jump Touch Reward: Rewards for touching the ball in the air, scaled by height
-     * 2. Air Roll Reward: Rewards for air rolling, especially when approaching and touching the ball
+     * 2. Air Roll Reward: Rewards for air rolling continuously when approaching the ball
      * 
-     * The air roll component is designed to encourage the agent to air roll during aerial
-     * challenges and 50/50s, similar to how human players use air roll for better control.
-     * 
-     * Anti-farming measures prevent the agent from performing normal aerials and then
-     * air rolling after the touch to farm bonus rewards.
+     * The air roll component uses distance-based scaling to encourage constant air rolling
+     * during aerial approaches, with higher rewards the closer the agent gets to the ball.
      */
     class JumpTouchReward : public RewardFunction {
     public:
@@ -40,8 +37,7 @@ namespace RLGSC {
                         float airRollWeight = 2.5f, float airRollMinHeight = 160.0f)
             : minHeight(minHeight), maxHeight(maxHeight), range(maxHeight - minHeight), 
               air_roll_weight(airRollWeight), air_roll_min_height(airRollMinHeight),
-              last_roll_input(0.0f), direction_changes(0), cumulative_roll_direction(0.0f),
-              ball_touched_recently(0), air_roll_cooldown_steps(30) {
+              last_roll_input(0.0f), direction_changes(0), cumulative_roll_direction(0.0f) {
                 // Ensure range is positive to avoid division issues
                 if (range <= 0) {
                     this->range = 1.0f;
@@ -53,7 +49,6 @@ namespace RLGSC {
             last_roll_input = 0.0f;
             direction_changes = 0;
             cumulative_roll_direction = 0.0f;
-            ball_touched_recently = 0;
         }
 
         // Calculate reward per step
@@ -64,10 +59,6 @@ namespace RLGSC {
         float last_roll_input;
         int direction_changes;
         float cumulative_roll_direction;
-        
-        // Anti-farming variables
-        int ball_touched_recently;      // Countdown after ball touch
-        const int air_roll_cooldown_steps; // Steps to prevent air roll rewards after touch
         
         // Constants
         static constexpr int MAX_DIRECTION_CHANGES = 2;
