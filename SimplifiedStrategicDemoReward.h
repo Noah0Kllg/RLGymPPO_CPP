@@ -63,7 +63,7 @@ namespace RLGSC {
         std::unordered_map<int, PlayerTrackingData> playerData;
         
         // Helper methods
-        float CalculateApproachReward(const PlayerData& player, const PlayerData& opponent, PlayerTrackingData& data) const;
+        float CalculateApproachReward(const PlayerData& player, const PlayerData& opponent, PlayerTrackingData& data, const GameState& state) const;
         float CalculateStrategicValue(const PlayerData& player, const PlayerData& opponent, const GameState& state) const;
         bool IsValidApproachTarget(const PlayerData& player, const PlayerData& opponent, PlayerTrackingData& data) const;
         float CalculateVelocityTowardsOpponent(const PlayerData& player, const PlayerData& opponent) const;

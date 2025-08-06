@@ -110,7 +110,7 @@ namespace RLGSC {
             }
             
             if (IsValidApproachTarget(player, opponent, data)) {
-                float approachReward = CalculateApproachReward(player, opponent, data);
+                float approachReward = CalculateApproachReward(player, opponent, data, state);
                 if (approachReward > 0.0f) {
                     totalReward += approachReward;
                     
@@ -153,7 +153,7 @@ namespace RLGSC {
         return true;
     }
 
-    float SimplifiedStrategicDemoReward::CalculateApproachReward(const PlayerData& player, const PlayerData& opponent, PlayerTrackingData& data) const {
+    float SimplifiedStrategicDemoReward::CalculateApproachReward(const PlayerData& player, const PlayerData& opponent, PlayerTrackingData& data, const GameState& state) const {
         float distToOpponent = (player.phys.pos - opponent.phys.pos).Length();
         float velocityTowards = CalculateVelocityTowardsOpponent(player, opponent);
         
