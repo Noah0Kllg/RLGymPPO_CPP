@@ -1,10 +1,10 @@
-#include "GoalDirectedAirDribbleReward.h"
+#include "EnhancedAirDribbleReward.h"
 #include <algorithm>
 #include <iostream>
 
 namespace RLGSC {
 
-void GoalDirectedAirDribbleReward::Reset(const GameState& initialState) {
+void EnhancedAirDribbleReward::Reset(const GameState& initialState) {
     prev_score_line = initialState.scoreLine;
     last_player_z = 0.0f;
     last_ball_z = 0.0f;
@@ -13,7 +13,7 @@ void GoalDirectedAirDribbleReward::Reset(const GameState& initialState) {
     direction_changes = 0;
 }
 
-GoalDirectedAirDribbleReward::GoalDirectedAirDribbleReward(
+EnhancedAirDribbleReward::EnhancedAirDribbleReward(
     float minHeight,
     float maxDistance,
     float proximityWeight,
@@ -63,7 +63,7 @@ GoalDirectedAirDribbleReward::GoalDirectedAirDribbleReward(
     height_scaling_denominator = std::max(1e-6f, CommonValues::CEILING_Z - min_height);
 }
 
-float GoalDirectedAirDribbleReward::GetReward(const PlayerData& player, const GameState& state, const Action& prevAction) {
+float EnhancedAirDribbleReward::GetReward(const PlayerData& player, const GameState& state, const Action& prevAction) {
     const Vec& car_pos = player.phys.pos;
     const Vec& ball_pos = state.ball.pos;
     float reward = 0.0f;
@@ -289,7 +289,7 @@ float GoalDirectedAirDribbleReward::GetReward(const PlayerData& player, const Ga
     return reward;
 }
 
-Vec GoalDirectedAirDribbleReward::GetTargetGoal(const PlayerData& player) const {
+Vec EnhancedAirDribbleReward::GetTargetGoal(const PlayerData& player) const {
     bool targetOrangeGoal = player.team == Team::BLUE;
     if (this->own_goal) {
         targetOrangeGoal = !targetOrangeGoal;
@@ -298,7 +298,7 @@ Vec GoalDirectedAirDribbleReward::GetTargetGoal(const PlayerData& player) const 
     return targetOrangeGoal ? CommonValues::ORANGE_GOAL_BACK : CommonValues::BLUE_GOAL_BACK;
 }
 
-float GoalDirectedAirDribbleReward::CalculateGoalDirectionMultiplier(const PlayerData& player, const GameState& state) const {
+float EnhancedAirDribbleReward::CalculateGoalDirectionMultiplier(const PlayerData& player, const GameState& state) const {
     // Get target goal
     Vec targetGoal = GetTargetGoal(player);
     

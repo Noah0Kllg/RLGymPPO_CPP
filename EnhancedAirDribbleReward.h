@@ -9,7 +9,7 @@
 
 namespace RLGSC {
 
-class GoalDirectedAirDribbleReward : public RewardFunction {
+class EnhancedAirDribbleReward : public RewardFunction {
 public:
     float min_height;
     float max_distance;
@@ -43,7 +43,7 @@ private:
     float last_ball_z;
 
 public:
-    GoalDirectedAirDribbleReward(
+    EnhancedAirDribbleReward(
         float minHeight = 200.0f,
         float maxDistance = 400.0f,
         float proximityWeight = 1.5f,
